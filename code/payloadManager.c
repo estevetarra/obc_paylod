@@ -6,13 +6,14 @@
 #include<time.h>
 
 //state is a shared variable with UAR
-char * state;
+char state;
 
 char runExperiment(char const * experimentName) {
   /*Spawn a child to run the program.*/
      pid_t pid=fork();
      if (pid==0) { /* child process */
-         exec(experimentName);
+         //execl(experimentName, NULL, NULL);
+         system(experimentName);
          exit(123); /* only if execv fails */
      }
      else { /* pid!=0; parent process */
@@ -27,11 +28,16 @@ int main(int argc, char const *argv[]) {
     //poll for I
     state = 'I';
   }
-  runExperiment("");
+  runExperiment("sleep 3");
   state = 'G';
-  runExperiment("");
-  state = 'O'
-  runExperiment("");
-  state = 'F'
+  printf( "G\n");
+  runExperiment("sleep 5");
+  state = 'O';
+
+  printf( "O\n");
+  runExperiment("sleep 4");
+
+  printf( "F\n");
+  state = 'F';
   return 0;
 }
