@@ -4,7 +4,7 @@
 #include <sys/types.h> /* for pid_t */
 #include <sys/wait.h> /* for wait */
 #include <signal.h> /* for kill */
-#include<time.h>
+#include <time.h>
 
 //state is a shared variable with UAR
 char state;
