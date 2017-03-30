@@ -31,6 +31,7 @@
 int socket_init_local_client(int port);
 int socket_init_server(int port);
 int socket_new_client(int sockfd);
+int read_with_timeout(int fd, void * p, size_t size, unsigned long ms);
 
 #endif 
 

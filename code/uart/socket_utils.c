@@ -8,6 +8,49 @@
 
 #include "socket_utils.h"
 
+
+int read_with_timeout(int fd, void * p, size_t size, unsigned long ms)
+{
+    // timeout structure passed into select
+    struct timeval tv;
+    // fd_set passed into select
+    fd_set fds;
+    int control_ret, read_ret;
+    // Set up the timeout.  here we can wait for 1 second
+    if (ms >= 1000){
+        tv.tv_sec = ms / 1000;
+        tv.tv_usec = (ms % 1000) * 1000;
+    }else{
+        tv.tv_sec = 0;
+        tv.tv_usec = ms * 1000;
+    }
+
+    // Zero out the fd_set - make sure it's pristine
+    FD_ZERO(&fds);
+    // Set the FD that we want to read
+    FD_SET(fd, &fds);
+    // select takes the last file descriptor value + 1 in the fdset to check,
+    // the fdset for reads, writes, and errors.  We are only passing in reads.
+    // the last parameter is the timeout.  select will return if an FD is ready or 
+    // the timeout has occurred
+    if ( (control_ret = select(fd+1, &fds, NULL, NULL, &tv) ) == -1){
+        return -1;
+    }
+    // return 0 if fd is not ready to be read.
+    if ( ( control_ret = FD_ISSET(fd, &fds) ) > 0 ){
+        /* Something to read! */
+        read_ret = read(fd, p, size);
+        if (read_ret == 0){
+            return -1;
+        }else{
+            return read_ret;
+        }
+    }else{
+        /* maybe is a -1 */
+        return control_ret;
+    }
+}
+
 int socket_init_local_client(int port)
 {
     int fd;
