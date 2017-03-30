@@ -11,17 +11,25 @@ Three main commands are shared:
 
 Get State shall return any state fromn specified in states.md, and will produce a __flowgraph__ like:
 
- ```C
  Wait for Init (**W** state)
- `Start command issued by __UART__`
- Initialisated (**I** state)
- `Running Experiment __G__`
- G Experiment done (**G** state)
- `Running Experiment __O__`
- O Experiment done (**O** state)
- `Running Experiment __A__`
- A Experiment done (**A** state)
- `Stop command issued by __UART__`
- Finished (**F** state)
- ```
 
+ `Start command issued by __UART__`
+
+ Initialisated (**I** state)
+
+ `Running Experiment __G__`
+
+ G Experiment done (**G** state)
+
+ `Running Experiment __O__`
+
+ O Experiment done (**O** state)
+
+ `Running Experiment __A__`
+
+ A Experiment done (**A** state)
+
+ `Stop command issued by __UART__`
+ 
+ Finished (**F** state)
+ 
