@@ -33,17 +33,28 @@ bool _safe_enqueue(void * queue, void * val)
 
 void * socket_work(void * args)
 {
-    uint8_t buffer[256];
     payload_command_handle_t cmd;
-    int server = socket_init_server(53001);
     int client;
     int ret;
     bool socket_connected = false;
+    int server = socket_init_server(53001);
+    if (server <= 0){
+        perror("Server faield to init");
+        exit(1);
+    }    
     /* FD timeout reading */
     while(1){
         if (!socket_connected){
-            client = socket_new_client(server);
-            socket_connected = true;
+            client = socket_new_client(server);            
+            if (client > 0){
+                socket_connected = true;
+            }else if (client == 0){
+                /* still wait */
+                socket_connected = false;
+            }else{
+                perror("Client failed to connect");
+                exit(1);
+            }
         }else{
             if ( (ret = read_with_timeout(client, &cmd, sizeof(payload_command_handle_t), 100) ) > 0){
                 printf("Command Requested: %d\n", cmd.fields.command_request);
@@ -78,7 +89,7 @@ void * uart_work(void * args)
     cmd.fields.len = 1;
     while(1){
         _safe_enqueue(&queue, &cmd);
-        sleep(5);
+        sleep(1);
     }
 }
 

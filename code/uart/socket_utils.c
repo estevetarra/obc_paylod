@@ -96,6 +96,9 @@ int socket_init_server(int port)
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 
         return -1;
+    
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0)
+        return -1;
 
     bzero((char *) &serv_addr, sizeof(serv_addr));
 
