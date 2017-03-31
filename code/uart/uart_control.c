@@ -84,9 +84,101 @@ void * socket_work(void * args)
     }
 }
 
-void process_command(command_def_t * cmd)
+/* Uses CMD to make an answer, filling a packet with Control settings */
+int process_command(serial_parms_t * s, command_def_t * cmd, simple_link_control_t * c)
 {
-    
+    file_command_t file;
+    command_def_t answer;
+    simple_link_packet_t packet;
+    int ret;
+    if (cmd == NULL){
+        return -1;
+    }
+    printf("Received command: %d at time %u\n", cmd->fields.command_id, cmd->fields.timestamp);
+    /* We already know cmd length by means of cmd->fields.len + CD_HEADER_SIZE */ 
+    switch (cmd->fields.command_id){
+        case CD_HELLO: 
+            printf("HELLO command received, Hello is returned\n");
+            answer.fields.timestamp = time(NULL);
+            answer.fields.command_id = CD_HELLO;
+            answer.fields.len = 0;
+            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+            if (ret > 0){
+                write(s->fd, &packet, ret);
+            }
+        break;
+
+        case CD_START:
+            printf("START command received, ACK is returned\n");
+
+        break;
+
+        case CD_STOP:
+            printf("STOP command received, ACK is returned\n");
+
+        break;
+
+        case CD_STATUS:
+            printf("STATUS command received, STATUS is returned\n");
+
+        break;
+
+        case CD_SET:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_GET:
+            printf("GET command received, File is returned\n");
+            /* 256 first bytes indicate the absolute path to get the file from */
+            /* This program goes there, if tar.gz the path and sends it */
+            printf("");
+        break;
+
+        case CD_SET_SAT_TLE:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_SET_GPS_TLE:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_SET_GAL_TLE:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_SET_MANAGER_CONF:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_SET_GNSS_CONF:
+            printf("SET command received, ACK is returned\n");
+
+        break;
+
+        case CD_GET_GNSS:
+            printf("GET command received, File is returned\n");
+
+        break;
+
+        case CD_GET_RAD:
+            printf("GET command received, File is returned\n");
+
+        break;
+
+        case CD_GET_AIS:
+            printf("GET command received, File is returned\n");
+
+        break;
+
+        default:
+        break;
+    }
+    return 0;
 }
 
 void * uart_work(void * args)
@@ -113,10 +205,7 @@ void * uart_work(void * args)
             read_port(&hserial);
             if ( (ret = get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) ) > 0){
                 memcpy(&uart_cmd, &packet_receiving.fields.payload, packet_receiving.fields.len);
-                printf("Received command: %d at time %u\n", uart_cmd.fields.command_id, uart_cmd.fields.timestamp);
-                set_simple_link_packet( (uint8_t *)&packet_receiving.fields.payload, packet_receiving.fields.len, 
-                                        0, 0, &control_sending, &packet_sending);
-                write(hserial.fd, &packet_sending, control_sending.full_size);
+                process_command(&hserial, &uart_cmd, &control_sending);
             }else if (ret < 0){
                 //printf("Ret error: %d\n", ret);
             }

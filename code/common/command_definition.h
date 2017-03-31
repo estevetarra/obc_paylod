@@ -36,4 +36,16 @@ typedef union __attribute__ ((__packed__)) command_def_u{
 	}fields;
 }command_def_t;
 
+#define FIL_HEADER_SIZE CD_PAYLOAD_MTU - 256 - 2
+
+typedef union __attribute__ ((__packed__)) file_command_u{
+	uint8_t 	raw[CD_PAYLOAD_MTU];
+	struct __attribute__ ((__packed__)){
+		/* Command ID uint8_t sized */
+		char 		file_path[256];
+		uint16_t    file_length;
+		uint8_t		file_contents[CD_PAYLOAD_MTU - 256];
+	}fields;
+}file_command_t;
+
 #endif
