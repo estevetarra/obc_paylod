@@ -1,6 +1,7 @@
 #include "simple_link.h"
 #include "uart_handler.h"
 #include "socket_utils.h"
+#include "command_definition.h"
 
 static char dev_name[128];
 
@@ -28,13 +29,16 @@ int main (int argc, char ** argv)
     /* open uart handler */
     int random_handler;
     serial_parms_t hserial;
-    int ret;
-    char buffer_stdin[128];
+
     simple_link_control_t control_sending;
     simple_link_control_t control_receiving;
     simple_link_packet_t packet_sending;
     simple_link_packet_t packet_receiving;
+
     int conf;
+    
+    command_def_t cmd;
+
     if (argc > 1){
         if (argc == 3){
             strncpy(dev_name, argv[1], sizeof(dev_name));
@@ -64,9 +68,10 @@ int main (int argc, char ** argv)
     srand(time(NULL));
 
     while ( stop_sending == false){
-        strcpy(buffer_stdin, "TEST STRING");
-        ret = strlen(buffer_stdin);
-        set_simple_link_packet((uint8_t*) buffer_stdin, ret, 0, 0, &control_sending, &packet_sending);
+        cmd.fields.timestamp = time(NULL);
+        cmd.fields.command_id = CD_HELLO;
+        cmd.fields.len = 0;
+        set_simple_link_packet((uint8_t*) &cmd, cmd.fields.len + CD_HEADER_SIZE, 0, 0, &control_sending, &packet_sending);
         /* This sends 2 packets, first packet erroneous and second correct one */
         if (conf == 2){
             random_handler = rand()%4;
@@ -94,9 +99,7 @@ int main (int argc, char ** argv)
         while (available(&hserial) > 0){
             read_port(&hserial);
             if (get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) > 0){
-                packet_receiving.fields.payload[packet_receiving.fields.len] = '\0';
                 received_packets++;
-                //printf("[UART]-> %d::%s from a total of: %d\n", packet.fields.len, packet.fields.payload, received_packets);
             }
         }
         print_progress((float) total_packets/1000.0);

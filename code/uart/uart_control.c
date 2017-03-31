@@ -9,6 +9,8 @@
 #include "simple_link.h"
 #include "uart_control.h"
 #include "uart_handler.h"
+#include "command_definition.h"
+
 /* shared circular buffer */
 static circ_buff_t queue;
 /* shared mutex */
@@ -82,40 +84,39 @@ void * socket_work(void * args)
     }
 }
 
+void process_command(command_def_t * cmd)
+{
+    
+}
+
 void * uart_work(void * args)
 {
-    //payload_command_handle_t cmd;
-    /* open uart handler */
+    //payload_command_handle_t pay_cmd;
+    command_def_t uart_cmd;
+
     serial_parms_t hserial;
-    /* Waiting for something here */
-    /* Send something to socket */
-    //cmd.fields.command_request = 0;
-    /* The length will be the command request + command response (if any) */
+    int ret;
+
+    simple_link_control_t   control_sending;
+    simple_link_packet_t    packet_sending;
+
+    simple_link_control_t   control_receiving;
+    simple_link_packet_t    packet_receiving;
+
     begin(dev_name, B115200, 100, &hserial);
-    //  cmd.fields.len = 1;
-
-    simple_link_control_t control_sending;
-    simple_link_packet_t packet_sending;
-    simple_link_control_t control_receiving;
-    simple_link_packet_t packet_receiving;
-
-    char buffer[128];
 
     prepare_simple_link('J', 'F', 0, &control_sending);
     prepare_simple_link('J', 'F', 5, &control_receiving);
-    int ret;
-    uint16_t received = 0;
+
     while(1){
         while (available(&hserial) > 0){
             read_port(&hserial);
             if ( (ret = get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) ) > 0){
-                packet_receiving.fields.payload[packet_receiving.fields.len] = '\0';
-                //printf("[UART]-> %d::%s\n", packet.fields.len, packet.fields.payload);
-                strcpy(buffer, "Response!");
-                set_simple_link_packet((uint8_t*) buffer, strlen(buffer)+1, 0, 0, &control_sending, &packet_sending);
+                memcpy(&uart_cmd, &packet_receiving.fields.payload, packet_receiving.fields.len);
+                printf("Received command: %d at time %u\n", uart_cmd.fields.command_id, uart_cmd.fields.timestamp);
+                set_simple_link_packet( (uint8_t *)&packet_receiving.fields.payload, packet_receiving.fields.len, 
+                                        0, 0, &control_sending, &packet_sending);
                 write(hserial.fd, &packet_sending, control_sending.full_size);
-                received++;
-                //printf("received: %d\n", received);
             }else if (ret < 0){
                 //printf("Ret error: %d\n", ret);
             }

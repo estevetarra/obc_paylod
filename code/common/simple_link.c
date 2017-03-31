@@ -86,11 +86,11 @@ static uint16_t crc16_ccitt(uint8_t *data, uint16_t length, uint16_t seed, uint1
 
 /* You give a buffer, it headers it with some info */
 /* It direclty copies the content of the buffer into the simple_link_packet handler */
-int set_simple_link_packet( uint8_t * buffer, uint16_t size, 
+int set_simple_link_packet( void * buffer, uint16_t size, 
                             uint8_t config1, uint8_t config2,
                             simple_link_control_t * c, simple_link_packet_t * p)
 {
-    if (buffer == NULL || size == 0 || size > SIMPLE_LINK_MTU || c == NULL || p == NULL){
+    if (buffer == NULL || size == 0 || size > SL_SIMPLE_LINK_MTU || c == NULL || p == NULL){
         return -1;
     }
     memcpy(p->fields.payload, buffer, size);
@@ -105,9 +105,9 @@ int set_simple_link_packet( uint8_t * buffer, uint16_t size,
     p->fields.crc = crc16_ccitt(p->fields.payload, size, 0xFFFF, 0);
     p->fields.crc = _htons(p->fields.crc);
 
-    c->full_size = size + HEADER_SIZE;
+    c->full_size = size + SL_HEADER_SIZE;
 
-    return 0;
+    return c->full_size;
 }
 
 /* To be executed once */
@@ -193,7 +193,7 @@ int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, sim
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
             p->fields.len = _ntohs(p->fields.len);
-            if (p->fields.len > SIMPLE_LINK_MTU){
+            if (p->fields.len > SL_SIMPLE_LINK_MTU){
                 prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
                 /* reset */
                 ret = -3;
@@ -212,16 +212,15 @@ int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, sim
         }else{
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-            if(c->byte_cnt >= p->fields.len + HEADER_SIZE){
+            if(c->byte_cnt >= p->fields.len + SL_HEADER_SIZE){
                 prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
                 /* If byte counter reaches the amount of length */
                 /* run crc comparison */
                 /* return if vaild */
                 if (crc16_ccitt(p->fields.payload, p->fields.len, 0xFFFF, p->fields.crc) == 0){
-                    c->full_size = p->fields.len + HEADER_SIZE;
-                    ret = p->fields.len;
+                    c->full_size = p->fields.len + SL_HEADER_SIZE;
+                    ret = c->full_size;
                 }else{
-                    prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
                     c->full_size = 0;
                     ret = -2;
                 }
