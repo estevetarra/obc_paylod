@@ -9,15 +9,6 @@
 #define SIMPLE_LINK_MTU 1500
 #define HEADER_SIZE 	8
 
-#define UART_BUFFER		2048
-
-typedef struct serial_parms_s{
-	int 			fd;
-	int 			ret;
-	unsigned char 	buffer[UART_BUFFER];
-	unsigned int 	timeout;
-}serial_parms_t;
-
 typedef enum simple_packet_positions_e{
 	sp_pos_sync1 = 0,
 	sp_pos_sync2,
@@ -53,12 +44,14 @@ typedef struct __attribute__ ((__packed__)) simple_link_control_s{
 	uint8_t 	sync1_found;
 	uint8_t 	sync2_found;
 	uint16_t 	byte_cnt;
+	uint64_t    last_activity; 	/* in ms */
+	uint16_t 	timeout; 		/* in ms */
 	/* Public arguments, to be used by the user as OUTPUT */
 	uint16_t    full_size;
 	/* the rest is to manage the link, do not touch! */
 }simple_link_control_t;
 
-int prepare_simple_link(uint8_t sync1, uint8_t sync2, simple_link_control_t * c);
+int prepare_simple_link(uint8_t sync1, uint8_t sync2, uint16_t timeout, simple_link_control_t * c);
 
 int get_simple_link_packet(uint8_t new_character, simple_link_control_t * h, simple_link_packet_t * p);
 

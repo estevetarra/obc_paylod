@@ -89,9 +89,8 @@ int socket_new_client(int sockfd)
 
 int socket_init_server(int port)
 {
-    int sockfd, newsockfd, portno;
-    socklen_t clilen;
-    struct sockaddr_in serv_addr, cli_addr;
+    int sockfd;
+    struct sockaddr_in serv_addr;
 
     sockfd = socket(AF_INET, SOCK_STREAM, 0);
     if (sockfd < 0) 

@@ -1,20 +1,14 @@
 CC=gcc
-CFLAGS=-I.
+CFLAGS=-I. -I../common/ -Wall
 LFLAGS=-lpthread
 
-DEPS = hellomake.h
+OBJ_UART = uart_control.o ../common/uart_handler.o ../common/socket_utils.o ../common/circular_queue.o ../common/simple_link.o
 
-OBJ_UART = uart_control.o socket_utils.o circular_queue.o
-OBJ_PAY = dummy_payload_manager.o socket_utils.o 
+.PHONY: all uart_control clean
 
-.PHONY: all uart_control dummy_payload clean
-
-all: uart_control dummy_payload clean
+all: uart_control clean
 
 uart_control: $(OBJ_UART)
-	gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
-
-dummy_payload: $(OBJ_PAY)
 	gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
 
 %.o: %.c $(DEPS)
@@ -22,3 +16,4 @@ dummy_payload: $(OBJ_PAY)
 
 clean:
 	rm -f *.o *~
+	rm -f ../common/*.o
