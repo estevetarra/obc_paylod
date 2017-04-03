@@ -20,12 +20,14 @@ The UART program must be connected to one PTY (ex. /dev/pts/22) and the __dummy_
 __dummy_uart__ connects to the PTY and sends a packets in different configurations:
 
 Configuration 1:
+
  	* 50% prob. to send a packet with flipped bytes (CRC test)
 	* 50% prob. to send a correct packet
 
 For configuration 1 no special requirements have to be met, just the timeout value of the API can be set to 1 or whatever
 
 Configuration 2:
+
 	* 25% prob. to send a corrupted packet with BAD LENGTH BYTE (random length)
 	* 25% prob. to send a shorter packet then the indicated by the length byte
 	* 25% prob. to send a packet with flipped bytes (CRC test)
