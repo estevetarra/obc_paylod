@@ -35,10 +35,15 @@ int main (int argc, char ** argv)
     simple_link_packet_t packet_sending;
     simple_link_packet_t packet_receiving;
 
-    int conf;
+    int conf, ret;
     
     command_def_t cmd;
     file_command_t file;
+
+    file_command_t * file_ptr;
+    command_def_t * uart_cmd;
+
+    FILE * fp;
 
     if (argc > 1){
         if (argc == 3){
@@ -47,7 +52,11 @@ int main (int argc, char ** argv)
         }else if (argc == 4){
             strncpy(dev_name, argv[1], sizeof(dev_name));         
             /* file path */
-            strncpy(file.fields.file_path, argv[2], 256);
+            if (argv[2][0] == 'g'){
+                strncpy(file.fields.file_path, argv[3], 256);
+            }else if (argv[2][0] == 's'){
+                strncpy(file.fields.file_path, argv[3], 256);
+            }
         }else{
             printf("WTF u doin\n");
             exit(1);
@@ -62,6 +71,7 @@ int main (int argc, char ** argv)
     /* Send something to socket */
     /* The length will be the command request + command response (if any) */
     begin(dev_name, B115200, 0, &hserial);
+
     uint16_t correct_packets = 0;
     uint16_t total_packets = 0;
     uint16_t received_packets = 0;
@@ -129,14 +139,57 @@ int main (int argc, char ** argv)
             }            
             printf("Amount of received packets: %d from a correct send: %d and a total amount of sent: %d\n", received_packets, correct_packets, total_packets);
         }
-    }else{
+    }else if (argv[2][0] == 'g'){
+        printf("Asking for file: %s\n", file.fields.file_path);
         cmd.fields.timestamp = time(NULL);
         cmd.fields.command_id = CD_GET;
+        file.fields.file_length = 0;
         cmd.fields.len = file.fields.file_length + FIL_HEADER_SIZE;
         memcpy(cmd.fields.payload, &file, cmd.fields.len);
-
-        set_simple_link_packet(&cmd, cmd.fields.len + CD_HEADER_SIZE, 0, 0, &control_sending, &packet_sending);
+        ret = set_simple_link_packet(&cmd, cmd.fields.len + CD_HEADER_SIZE, 0, 0, &control_sending, &packet_sending);
+        printf("Set simple link returned: %d\n", ret);
         write(hserial.fd, &packet_sending, control_sending.full_size);
+        usleep(100 * 1000);
+        while (available(&hserial) > 0){
+            read_port(&hserial);
+            if (get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) > 0){
+                //packet_receiving.fields.payload[packet_receiving.fields.len] = '\0';
+                printf("Packet received of length: %d\n", packet_receiving.fields.len);
+                uart_cmd = (command_def_t *) &packet_receiving.fields.payload[0];
+                file_ptr = (file_command_t *) &uart_cmd->fields.payload[0];
+                printf("File of size: %d received\n", file_ptr->fields.file_length);
+                //printf("[UART]-> %d::%s from a total of: %d\n", packet.fields.len, packet.fields.payload, received_packets);
+            }
+        }           
+    }else if (argv[2][0] == 's'){
+        printf("Setting the file: %s\n", file.fields.file_path);
+        cmd.fields.timestamp = time(NULL);
+        cmd.fields.command_id = CD_SET;
+        fp = fopen("/home/gs-ms/Desktop/obc_paylod/README.md", "r+b");
+        if (fp != NULL){
+            fseek(fp, 0L, SEEK_END);
+            file.fields.file_length = ftell(fp);
+            printf("File to send length is: %d\n", file.fields.file_length);
+            fseek(fp, 0L, SEEK_SET);
+            fread(file.fields.file_contents, 1, file.fields.file_length, fp);
+        }
+        //file.fields.file_length = 0;
+        cmd.fields.len = file.fields.file_length + FIL_HEADER_SIZE;
+        memcpy(cmd.fields.payload, &file, cmd.fields.len);
+        ret = set_simple_link_packet(&cmd, cmd.fields.len + CD_HEADER_SIZE, 0, 0, &control_sending, &packet_sending);
+        printf("Set simple link returned: %d\n", ret);
+        write(hserial.fd, &packet_sending, control_sending.full_size);
+        usleep(100 * 1000);
+        while (available(&hserial) > 0){
+            read_port(&hserial);
+            if (get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) > 0){
+                //packet_receiving.fields.payload[packet_receiving.fields.len] = '\0';
+                printf("Packet received of length: %d\n", packet_receiving.fields.len);
+                uart_cmd = (command_def_t *) &packet_receiving.fields.payload[0];
+                printf("Command received: %d\n", uart_cmd->fields.command_id);
+                //printf("[UART]-> %d::%s from a total of: %d\n", packet.fields.len, packet.fields.payload, received_packets);
+            }
+        }    
     }
 
     close(hserial.fd);

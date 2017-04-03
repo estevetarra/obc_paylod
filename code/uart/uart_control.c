@@ -84,10 +84,44 @@ void * socket_work(void * args)
     }
 }
 
+/* this functions inputs a file pointer with a file name
+ * it outputs a file pointer with the file_length and file contents filled */
+static int get_file(file_command_t * file)
+{
+    FILE * fp;
+    int ret = 0;
+    fp = fopen(file->fields.file_path, "r+b");
+    if (fp != NULL){
+        fseek(fp, 0L, SEEK_END);
+        file->fields.file_length = ftell(fp);
+        printf("File to send length is: %d\n", file->fields.file_length);
+        fseek(fp, 0L, SEEK_SET);
+        if (fread(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length){
+            ret = file->fields.file_length;
+        }
+    }
+    fclose(fp);
+    return ret;
+}
+
+static int set_file(file_command_t * file)
+{
+    FILE * fp;
+    int ret = 0;
+    fp = fopen(file->fields.file_path, "w+b");
+    if (fp != NULL){
+        if (fwrite(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length){
+            ret = file->fields.file_length;
+        }
+    }
+    fclose(fp);
+    return ret;
+}
+
 /* Uses CMD to make an answer, filling a packet with Control settings */
 int process_command(serial_parms_t * s, command_def_t * cmd, simple_link_control_t * c)
 {
-    file_command_t file;
+    file_command_t * file;
     command_def_t answer;
     simple_link_packet_t packet;
     int ret;
@@ -124,15 +158,33 @@ int process_command(serial_parms_t * s, command_def_t * cmd, simple_link_control
         break;
 
         case CD_SET:
-            printf("SET command received, ACK is returned\n");
-
+            file = (file_command_t *) &cmd->fields.payload;
+            printf("SET command received, %s file is pushed\n", file->fields.file_path);
+            set_file(file);
+            answer.fields.timestamp = time(NULL);
+            answer.fields.command_id = CD_SET;
+            answer.fields.len = 0;
+            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+            if (ret > 0){
+                write(s->fd, &packet, ret);
+            }    
         break;
 
         case CD_GET:
-            printf("GET command received, File is returned\n");
             /* 256 first bytes indicate the absolute path to get the file from */
             /* This program goes there, if tar.gz the path and sends it */
-            printf("");
+            /* So nice, get file is done! */
+            file = (file_command_t *) &cmd->fields.payload;
+            printf("GET command received, %s file requested\n", file->fields.file_path);
+            get_file(file);
+            answer.fields.timestamp = time(NULL);
+            answer.fields.command_id = CD_GET;
+            answer.fields.len = file->fields.file_length + FIL_HEADER_SIZE;
+            memcpy(&answer.fields.payload, file, answer.fields.len);
+            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+            if (ret > 0){
+                write(s->fd, &packet, ret);
+            }            
         break;
 
         case CD_SET_SAT_TLE:
@@ -184,7 +236,7 @@ int process_command(serial_parms_t * s, command_def_t * cmd, simple_link_control
 void * uart_work(void * args)
 {
     //payload_command_handle_t pay_cmd;
-    command_def_t uart_cmd;
+    command_def_t * uart_cmd;
 
     serial_parms_t hserial;
     int ret;
@@ -204,8 +256,9 @@ void * uart_work(void * args)
         while (available(&hserial) > 0){
             read_port(&hserial);
             if ( (ret = get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) ) > 0){
-                memcpy(&uart_cmd, &packet_receiving.fields.payload, packet_receiving.fields.len);
-                process_command(&hserial, &uart_cmd, &control_sending);
+                //memcpy(&uart_cmd, &packet_receiving.fields.payload, packet_receiving.fields.len);
+                uart_cmd = (command_def_t *) &packet_receiving.fields.payload[0];
+                process_command(&hserial, uart_cmd, &control_sending);
             }else if (ret < 0){
                 //printf("Ret error: %d\n", ret);
             }
