@@ -10,14 +10,14 @@ OBJ_DUART = dummy_uart.o ../common/uart_handler.o ../common/simple_link.o ../com
 all: dummy_uart dummy_payload clean
 
 dummy_uart: $(OBJ_DUART)
-	gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
+    gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
   
 dummy_payload: $(OBJ_DPAY)
-	gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
+    gcc -o $@ $^ $(CFLAGS) $(LFLAGS)
 
 %.o: %.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+    $(CC) -c -o $@ $< $(CFLAGS)
 
 clean:
-	rm -f *.o *~
-	rm -f ../common/*.o
+    rm -f *.o *~
+    rm -f ../common/*.o

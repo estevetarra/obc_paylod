@@ -28,7 +28,7 @@ int runExperiment(char const * experimentName, int timeout) {
            wpid = waitpid(pid,&status,WNOHANG);
            currentTime = (int)time(NULL);
          }
-         if (wpid == 0){
+         if (wpid == 0) {
            //The experiment has run for too much time
            int ret = kill(pid,0);
            if ( ret == 0 )   printf( "Killed succesfuly \n");
@@ -39,7 +39,7 @@ int runExperiment(char const * experimentName, int timeout) {
 
 int main(int argc, char const *argv[]) {
   state = 'W';
-  while(state == 'W'){
+  while(state == 'W') {
     //poll for I
     state = 'I';
   }

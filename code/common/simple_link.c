@@ -64,11 +64,11 @@ static uint16_t swap_uint16(uint16_t s)
 }
 #endif
 
-static uint16_t _htons(uint16_t host){
+static uint16_t _htons(uint16_t host) {
     return (swap_uint16(host));
 }
 
-static uint16_t _ntohs(uint16_t network){
+static uint16_t _ntohs(uint16_t network) {
     return (swap_uint16(network));
 }
 
@@ -77,7 +77,7 @@ static uint16_t crc16_ccitt(uint8_t *data, uint16_t length, uint16_t seed, uint1
    uint16_t count;
    uint16_t crc = seed;
    uint16_t temp;
-   for (count = 0; count < length; ++count){
+   for (count = 0; count < length; ++count) {
      temp = ( (*data++ ^ (crc >> 8)) & 0xff );
      crc = crc_table[temp] ^ (crc << 8);
    }
@@ -90,7 +90,7 @@ int set_simple_link_packet( void * buffer, uint16_t size,
                             uint8_t config1, uint8_t config2,
                             simple_link_control_t * c, simple_link_packet_t * p)
 {
-    if (buffer == NULL || size == 0 || size > SL_SIMPLE_LINK_MTU || c == NULL || p == NULL){
+    if (buffer == NULL || size == 0 || size > SL_SIMPLE_LINK_MTU || c == NULL || p == NULL) {
         return -1;
     }
     memcpy(p->fields.payload, buffer, size);
@@ -114,7 +114,7 @@ int set_simple_link_packet( void * buffer, uint16_t size,
 /* Set syncwords here, set control bytes (for TX purposes) */
 int prepare_simple_link(uint8_t sync1, uint8_t sync2, uint16_t timeout, simple_link_control_t * c)
 {
-    if (c == NULL){
+    if (c == NULL) {
         return -1;
     }
     c->sync1 = sync1;
@@ -145,30 +145,30 @@ int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, sim
 {
     int ret = 0;
     uint32_t timeout;
-    if (c == NULL || p == NULL){
+    if (c == NULL || p == NULL) {
         return -1;
     }
     /* Check last activity */
-    if (c->byte_cnt > 0){
+    if (c->byte_cnt > 0) {
         timeout = ms_count() - c->last_activity;
-        if (timeout >= c->timeout){
+        if (timeout >= c->timeout) {
             prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
             c->last_activity = ms_count();
         }
     }
-    if (c->sync1_found == 0 && c->byte_cnt == sp_pos_sync1){
+    if (c->sync1_found == 0 && c->byte_cnt == sp_pos_sync1) {
         c->last_activity = ms_count();
-        if (c->sync1 == new_character){
+        if (c->sync1 == new_character) {
             c->sync1_found = 1;
             c->sync2_found = 0;
             p->fields.sync1 = new_character;
             c->byte_cnt++;
             /* OFC we have to reset sync2 */
         }
-    }else if (c->sync2_found == 0 && c->byte_cnt == sp_pos_sync2){
+    }else if (c->sync2_found == 0 && c->byte_cnt == sp_pos_sync2) {
         /* Here enters if hsync1 is found */
         c->last_activity = ms_count();
-        if (c->sync2 == new_character){
+        if (c->sync2 == new_character) {
             c->sync2_found = 1;
             p->fields.sync2 = new_character;
             c->byte_cnt++;
@@ -178,32 +178,32 @@ int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, sim
     }else{
         c->last_activity = ms_count();
         /* Here enters if hsync1_found and hsync2_found are 1 */
-        if (c->byte_cnt == sp_pos_config1){
+        if (c->byte_cnt == sp_pos_config1) {
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-        }else if (c->byte_cnt == sp_pos_config2){
+        }else if (c->byte_cnt == sp_pos_config2) {
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-        }else if (c->byte_cnt == sp_pos_len1){
+        }else if (c->byte_cnt == sp_pos_len1) {
             /* legacy */
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-        }else if (c->byte_cnt == sp_pos_len2){
+        }else if (c->byte_cnt == sp_pos_len2) {
             /* legacy */
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
             p->fields.len = _ntohs(p->fields.len);
-            if (p->fields.len > SL_SIMPLE_LINK_MTU){
+            if (p->fields.len > SL_SIMPLE_LINK_MTU) {
                 prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
                 /* reset */
                 ret = -3;
             }
             /* Inverted here */
-        }else if (c->byte_cnt == sp_pos_crc1){
+        }else if (c->byte_cnt == sp_pos_crc1) {
             /* legacy */
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-        }else if (c->byte_cnt == sp_pos_crc2){
+        }else if (c->byte_cnt == sp_pos_crc2) {
             /* legacy */
             p->raw[c->byte_cnt] = new_character;
             p->fields.crc = _ntohs(p->fields.crc);
@@ -212,12 +212,12 @@ int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, sim
         }else{
             p->raw[c->byte_cnt] = new_character;
             c->byte_cnt++;
-            if(c->byte_cnt >= p->fields.len + SL_HEADER_SIZE){
+            if(c->byte_cnt >= p->fields.len + SL_HEADER_SIZE) {
                 prepare_simple_link(c->sync1, c->sync2, c->timeout, c);
                 /* If byte counter reaches the amount of length */
                 /* run crc comparison */
                 /* return if vaild */
-                if (crc16_ccitt(p->fields.payload, p->fields.len, 0xFFFF, p->fields.crc) == 0){
+                if (crc16_ccitt(p->fields.payload, p->fields.len, 0xFFFF, p->fields.crc) == 0) {
                     c->full_size = p->fields.len + SL_HEADER_SIZE;
                     ret = c->full_size;
                 }else{

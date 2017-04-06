@@ -21,17 +21,17 @@ __dummy_uart__ connects to the PTY and sends a packets in different configuratio
 
 Configuration 1:
 
- 	* 50% prob. to send a packet with flipped bytes (CRC test)
-	* 50% prob. to send a correct packet
+     * 50% prob. to send a packet with flipped bytes (CRC test)
+    * 50% prob. to send a correct packet
 
 For configuration 1 no special requirements have to be met, just the timeout value of the API can be set to 1 or whatever
 
 Configuration 2:
 
-	* 25% prob. to send a corrupted packet with BAD LENGTH BYTE (random length)
-	* 25% prob. to send a shorter packet then the indicated by the length byte
-	* 25% prob. to send a packet with flipped bytes (CRC test)
-	* 25% prob. to send a correct packet
+    * 25% prob. to send a corrupted packet with BAD LENGTH BYTE (random length)
+    * 25% prob. to send a shorter packet then the indicated by the length byte
+    * 25% prob. to send a packet with flipped bytes (CRC test)
+    * 25% prob. to send a correct packet
 
 For configuration 2 the timeout must be set in accordance with the packet/rate, which is by default 1 packet every 20 milliseconds, thus the timeout must be a lower value (10ms for instance). In case of not respecting this statement, the API cannot handle erasures bytes in the middle of a packet. You can execute this putting bad timeouts to see the API behaviour.
 

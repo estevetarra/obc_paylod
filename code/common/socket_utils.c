@@ -17,7 +17,7 @@ int read_with_timeout(int fd, void * p, size_t size, unsigned long ms)
     fd_set fds;
     int control_ret, read_ret;
     // Set up the timeout.  here we can wait for 1 second
-    if (ms >= 1000){
+    if (ms >= 1000) {
         tv.tv_sec = ms / 1000;
         tv.tv_usec = (ms % 1000) * 1000;
     }else{
@@ -33,14 +33,14 @@ int read_with_timeout(int fd, void * p, size_t size, unsigned long ms)
     // the fdset for reads, writes, and errors.  We are only passing in reads.
     // the last parameter is the timeout.  select will return if an FD is ready or 
     // the timeout has occurred
-    if ( (control_ret = select(fd+1, &fds, NULL, NULL, &tv) ) == -1){
+    if ( (control_ret = select(fd+1, &fds, NULL, NULL, &tv) ) == -1) {
         return -1;
     }
     // return 0 if fd is not ready to be read.
-    if ( ( control_ret = FD_ISSET(fd, &fds) ) > 0 ){
+    if ( ( control_ret = FD_ISSET(fd, &fds) ) > 0 ) {
         /* Something to read! */
         read_ret = read(fd, p, size);
-        if (read_ret == 0){
+        if (read_ret == 0) {
             return -1;
         }else{
             return read_ret;
@@ -58,11 +58,11 @@ int socket_init_local_client(int port)
     /* estructura que recibirá información sobre el nodo remoto */
     struct sockaddr_in server;
     /* información sobre la dirección del servidor */
-    if ((he=gethostbyname("localhost"))==NULL){
+    if ((he=gethostbyname("localhost"))==NULL) {
         return -1;
     }
     
-    if ((fd=socket(AF_INET, SOCK_STREAM, 0))==-1){
+    if ((fd=socket(AF_INET, SOCK_STREAM, 0))==-1) {
         return -1;
     }
 
@@ -73,7 +73,7 @@ int socket_init_local_client(int port)
     bzero(&(server.sin_zero), 8);
     
     if(connect(fd, (struct sockaddr *)&server,
-               sizeof(struct sockaddr))==-1){
+               sizeof(struct sockaddr))==-1) {
         return -1;
     }
     return fd;
@@ -96,7 +96,7 @@ int socket_init_server(int port)
     if (sockfd < 0) 
         return -1;
     
-    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int){ 1 }, sizeof(int)) < 0)
+    if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &(int) { 1 }, sizeof(int)) < 0)
         return -1;
 
     bzero((char *) &serv_addr, sizeof(serv_addr));

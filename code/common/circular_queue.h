@@ -6,7 +6,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define CIRC_BUFF_TOTAL_SIZE	40 * 1024
+#define CIRC_BUFF_TOTAL_SIZE    40 * 1024
 
 /**
  * @brief Circular buffer handler.
@@ -15,14 +15,14 @@
  * amount of elements, element size and total queue size
  * finally pointers for write/read and the amount of items in the queue
  */
-typedef struct circ_buff_s{
-	void *  			data;
-	uint16_t 			element_size;
-	uint16_t 			element_count;
-	volatile uint16_t	queued_items;
-	volatile uint16_t 	read_ptr;
-	volatile uint16_t 	write_ptr;
-	uint32_t 			queue_size;
+typedef struct circ_buff_s {
+    void *              data;
+    uint16_t             element_size;
+    uint16_t             element_count;
+    volatile uint16_t    queued_items;
+    volatile uint16_t    read_ptr;
+    volatile uint16_t    write_ptr;
+    uint32_t             queue_size;
 }circ_buff_t;
 
 /**
@@ -72,7 +72,7 @@ bool dequeue(circ_buff_t * handler, void * val);
  *
  * @param[in] The handler to the queue
  * @param[in] Pointer to a object of the size of one element from the queue
- * 	the object will be put into the queue as a FIFO
+ *     the object will be put into the queue as a FIFO
  * @returns True if the call success, false otherwise
  */
 bool enqueue(circ_buff_t * handler, void * val);

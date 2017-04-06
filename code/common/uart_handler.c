@@ -68,10 +68,10 @@ void begin(const char * device, int baud, unsigned int timeout_ms, serial_parms_
     /*baudrate 115200, 8 bits, no parity, 1 stop bit */
     set_interface_attribs(handler->fd, baud);
     /* Convert milli-seconds to deca-seconds */
-    if (timeout_ms == 0){
+    if (timeout_ms == 0) {
         /* pure non-blocking */
         set_mincount(handler->fd, 0, 0);                /* set to pure timed read */    
-    }else if (timeout_ms < 100){
+    }else if (timeout_ms < 100) {
         /* 100ms blocking */
         set_mincount(handler->fd, 0, 1);                /* set to pure timed read */    
     }else{
@@ -106,11 +106,11 @@ void clear (serial_parms_t * input_handler)
 int readBytesUntil(serial_parms_t * input_handler, char to_find, char * buffer, int max_size)
 {   
     int cnt = 0;
-    if(available(input_handler) > 0){
-        while (read_port(input_handler) > 0){
+    if(available(input_handler) > 0) {
+        while (read_port(input_handler) > 0) {
             /* keep reading */
             buffer[cnt] = input_handler->buffer[0];
-            if ((char) buffer[cnt] == to_find){
+            if ((char) buffer[cnt] == to_find) {
                 cnt++;
                 return cnt;
             }else{

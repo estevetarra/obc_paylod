@@ -43,17 +43,17 @@ void * socket_work(void * args)
     int ret;
     bool socket_connected = false;
     int server = socket_init_server(53001);
-    if (server <= 0){
+    if (server <= 0) {
         perror("Server faield to init");
         exit(1);
     }    
     /* FD timeout reading */
-    while(1){
-        if (!socket_connected){
+    while(1) {
+        if (!socket_connected) {
             client = socket_new_client(server);            
-            if (client > 0){
+            if (client > 0) {
                 socket_connected = true;
-            }else if (client == 0){
+            }else if (client == 0) {
                 /* still wait */
                 socket_connected = false;
             }else{
@@ -61,15 +61,15 @@ void * socket_work(void * args)
                 exit(1);
             }
         }else{
-            if ( (ret = read_with_timeout(client, &cmd, sizeof(payload_command_handle_t), 100) ) > 0){
+            if ( (ret = read_with_timeout(client, &cmd, sizeof(payload_command_handle_t), 100) ) > 0) {
                 printf("Command Requested: %d\n", cmd.fields.command_request);
                 printf("Command Length: %d\n", cmd.fields.len);
                 cmd.fields.command_response[cmd.fields.len - 1] = '\0';
                 printf("Received Response: %s\n", cmd.fields.command_response);
-            }else if (ret == 0){
+            }else if (ret == 0) {
                 /* There is something on the queue? */
-                if (_safe_dequeue(&queue, &cmd)){
-                    if (write(client, &cmd, cmd.fields.len+1) <= 0){
+                if (_safe_dequeue(&queue, &cmd)) {
+                    if (write(client, &cmd, cmd.fields.len+1) <= 0) {
                         perror("End of socket (writing)");
                         socket_connected = false;
                     }
@@ -91,12 +91,12 @@ static int get_file(file_command_t * file)
     FILE * fp;
     int ret = 0;
     fp = fopen(file->fields.file_path, "r+b");
-    if (fp != NULL){
+    if (fp != NULL) {
         fseek(fp, 0L, SEEK_END);
         file->fields.file_length = ftell(fp);
         printf("File to send length is: %d\n", file->fields.file_length);
         fseek(fp, 0L, SEEK_SET);
-        if (fread(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length){
+        if (fread(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length) {
             ret = file->fields.file_length;
         }
     }
@@ -109,8 +109,8 @@ static int set_file(file_command_t * file)
     FILE * fp;
     int ret = 0;
     fp = fopen(file->fields.file_path, "w+b");
-    if (fp != NULL){
-        if (fwrite(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length){
+    if (fp != NULL) {
+        if (fwrite(file->fields.file_contents, 1, file->fields.file_length, fp) == file->fields.file_length) {
             ret = file->fields.file_length;
         }
     }
@@ -125,110 +125,110 @@ int process_command(serial_parms_t * s, command_def_t * cmd, simple_link_control
     command_def_t answer;
     simple_link_packet_t packet;
     int ret;
-    if (cmd == NULL){
+    if (cmd == NULL) {
         return -1;
     }
     printf("Received command: %d at time %u\n", cmd->fields.command_id, cmd->fields.timestamp);
     /* We already know cmd length by means of cmd->fields.len + CD_HEADER_SIZE */ 
-    switch (cmd->fields.command_id){
+    switch (cmd->fields.command_id) {
         case CD_HELLO: 
-            printf("HELLO command received, Hello is returned\n");
-            answer.fields.timestamp = time(NULL);
-            answer.fields.command_id = CD_HELLO;
-            answer.fields.len = 0;
-            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
-            if (ret > 0){
-                write(s->fd, &packet, ret);
-            }
-        break;
+        printf("HELLO command received, Hello is returned\n");
+        answer.fields.timestamp = time(NULL);
+        answer.fields.command_id = CD_HELLO;
+        answer.fields.len = 0;
+        ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+        if (ret > 0) {
+            write(s->fd, &packet, ret);
+        }
+            break;
 
         case CD_START:
-            printf("START command received, ACK is returned\n");
+        printf("START command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_STOP:
-            printf("STOP command received, ACK is returned\n");
+        printf("STOP command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_STATUS:
-            printf("STATUS command received, STATUS is returned\n");
+        printf("STATUS command received, STATUS is returned\n");
 
-        break;
+            break;
 
         case CD_SET:
-            file = (file_command_t *) &cmd->fields.payload;
-            printf("SET command received, %s file is pushed\n", file->fields.file_path);
-            set_file(file);
-            answer.fields.timestamp = time(NULL);
-            answer.fields.command_id = CD_SET;
-            answer.fields.len = 0;
-            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
-            if (ret > 0){
-                write(s->fd, &packet, ret);
-            }    
-        break;
+        file = (file_command_t *) &cmd->fields.payload;
+        printf("SET command received, %s file is pushed\n", file->fields.file_path);
+        set_file(file);
+        answer.fields.timestamp = time(NULL);
+        answer.fields.command_id = CD_SET;
+        answer.fields.len = 0;
+        ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+        if (ret > 0) {
+            write(s->fd, &packet, ret);
+        }    
+            break;
 
         case CD_GET:
             /* 256 first bytes indicate the absolute path to get the file from */
             /* This program goes there, if tar.gz the path and sends it */
             /* So nice, get file is done! */
-            file = (file_command_t *) &cmd->fields.payload;
-            printf("GET command received, %s file requested\n", file->fields.file_path);
-            get_file(file);
-            answer.fields.timestamp = time(NULL);
-            answer.fields.command_id = CD_GET;
-            answer.fields.len = file->fields.file_length + FIL_HEADER_SIZE;
-            memcpy(&answer.fields.payload, file, answer.fields.len);
-            ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
-            if (ret > 0){
-                write(s->fd, &packet, ret);
-            }            
-        break;
+        file = (file_command_t *) &cmd->fields.payload;
+        printf("GET command received, %s file requested\n", file->fields.file_path);
+        get_file(file);
+        answer.fields.timestamp = time(NULL);
+        answer.fields.command_id = CD_GET;
+        answer.fields.len = file->fields.file_length + FIL_HEADER_SIZE;
+        memcpy(&answer.fields.payload, file, answer.fields.len);
+        ret = set_simple_link_packet(&answer, answer.fields.len + CD_HEADER_SIZE, 0, 0, c, &packet);
+        if (ret > 0) {
+            write(s->fd, &packet, ret);
+        }            
+            break;
 
         case CD_SET_SAT_TLE:
-            printf("SET command received, ACK is returned\n");
+        printf("SET command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_SET_GPS_TLE:
-            printf("SET command received, ACK is returned\n");
+        printf("SET command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_SET_GAL_TLE:
-            printf("SET command received, ACK is returned\n");
+        printf("SET command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_SET_MANAGER_CONF:
-            printf("SET command received, ACK is returned\n");
+        printf("SET command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_SET_GNSS_CONF:
-            printf("SET command received, ACK is returned\n");
+        printf("SET command received, ACK is returned\n");
 
-        break;
+            break;
 
         case CD_GET_GNSS:
-            printf("GET command received, File is returned\n");
+        printf("GET command received, File is returned\n");
 
-        break;
+            break;
 
         case CD_GET_RAD:
-            printf("GET command received, File is returned\n");
+        printf("GET command received, File is returned\n");
 
-        break;
+            break;
 
         case CD_GET_AIS:
-            printf("GET command received, File is returned\n");
+        printf("GET command received, File is returned\n");
 
-        break;
+            break;
 
         default:
-        break;
+            break;
     }
     return 0;
 }
@@ -252,14 +252,14 @@ void * uart_work(void * args)
     prepare_simple_link('J', 'F', 0, &control_sending);
     prepare_simple_link('J', 'F', 5, &control_receiving);
 
-    while(1){
-        while (available(&hserial) > 0){
+    while(1) {
+        while (available(&hserial) > 0) {
             read_port(&hserial);
-            if ( (ret = get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) ) > 0){
+            if ( (ret = get_simple_link_packet(hserial.buffer[0], &control_receiving, &packet_receiving) ) > 0) {
                 //memcpy(&uart_cmd, &packet_receiving.fields.payload, packet_receiving.fields.len);
                 uart_cmd = (command_def_t *) &packet_receiving.fields.payload[0];
                 process_command(&hserial, uart_cmd, &control_sending);
-            }else if (ret < 0){
+            }else if (ret < 0) {
                 //printf("Ret error: %d\n", ret);
             }
         }
@@ -275,8 +275,8 @@ int main (int argc, char ** argv)
     /* this creates a tcp server socket */
     pthread_t socket_thread;
     pthread_t uart_thread;
-    if (argc > 1){
-        if (argc == 2){
+    if (argc > 1) {
+        if (argc == 2) {
             strncpy(dev_name, argv[1], sizeof(dev_name));
         }else{
             printf("WTF u doin\n");

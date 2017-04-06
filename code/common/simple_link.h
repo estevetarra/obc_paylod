@@ -7,7 +7,7 @@
 #include <string.h>
 
 #define SL_SIMPLE_LINK_MTU 65535
-#define SL_HEADER_SIZE 	8
+#define SL_HEADER_SIZE     8
 
 /**
  * @brief Simple Link is a UART based link control
@@ -23,15 +23,15 @@
  */
 
 typedef enum simple_packet_positions_e{
-	sp_pos_sync1 = 0,
-	sp_pos_sync2,
-	sp_pos_config1,
-	sp_pos_config2,
-	sp_pos_len1,
-	sp_pos_len2,
-	sp_pos_crc1,
-	sp_pos_crc2,
-	sp_pos_payload,
+    sp_pos_sync1 = 0,
+    sp_pos_sync2,
+    sp_pos_config1,
+    sp_pos_config2,
+    sp_pos_len1,
+    sp_pos_len2,
+    sp_pos_crc1,
+    sp_pos_crc2,
+    sp_pos_payload,
 }simple_packet_positions_e;
 
 /**
@@ -43,33 +43,33 @@ typedef enum simple_packet_positions_e{
  * Only for cases where TX and RX are sequential and the sync bytes are the same a structure can be used for both
  */
 typedef union __attribute__ ((__packed__)) simple_link_packet_s{
-	uint8_t 	raw[SL_HEADER_SIZE + SL_SIMPLE_LINK_MTU];
-	struct __attribute__ ((__packed__)){
-		uint8_t 	sync1;
-		uint8_t 	sync2;
-		uint8_t 	config1;
-		uint8_t 	config2;
-		uint16_t 	len;
-		uint16_t 	crc;
-		uint8_t 	payload[SL_SIMPLE_LINK_MTU];
-	}fields;
+    uint8_t     raw[SL_HEADER_SIZE + SL_SIMPLE_LINK_MTU];
+    struct __attribute__ ((__packed__)) {
+        uint8_t     sync1;
+        uint8_t     sync2;
+        uint8_t     config1;
+        uint8_t     config2;
+        uint16_t    len;
+        uint16_t    crc;
+        uint8_t     payload[SL_SIMPLE_LINK_MTU];
+    }fields;
 }simple_link_packet_t;
 
 typedef struct __attribute__ ((__packed__)) simple_link_control_s{
-	/* things here are used to control the link */
-	/* PROTECTED ARGUMENTS -> to be set by prepare link function */
-	uint8_t 	sync1;
-	uint8_t 	sync2;
-	/* sync1 and sync2 are the sync words to look for */
-	/* PRIVATE ARGUMENTS */
-	uint8_t 	sync1_found;
-	uint8_t 	sync2_found;
-	uint16_t 	byte_cnt;
-	uint64_t    last_activity; 	/* in ms */
-	uint16_t 	timeout; 		/* in ms */
-	/* Public arguments, to be used by the user as OUTPUT */
-	uint16_t    full_size;
-	/* the rest is to manage the link, do not touch! */
+    /* things here are used to control the link */
+    /* PROTECTED ARGUMENTS -> to be set by prepare link function */
+    uint8_t     sync1;
+    uint8_t     sync2;
+    /* sync1 and sync2 are the sync words to look for */
+    /* PRIVATE ARGUMENTS */
+    uint8_t     sync1_found;
+    uint8_t     sync2_found;
+    uint16_t    byte_cnt;
+    uint64_t    last_activity;     /* in ms */
+    uint16_t    timeout;         /* in ms */
+    /* Public arguments, to be used by the user as OUTPUT */
+    uint16_t    full_size;
+    /* the rest is to manage the link, do not touch! */
 }simple_link_control_t;
 
 /**
@@ -98,12 +98,12 @@ int prepare_simple_link(uint8_t sync1, uint8_t sync2, uint16_t timeout, simple_l
  * In the packet structure, all the parameters are valid in this point
  * 
  * This packet can be get by means of:
- *		while(1){
- *			read(fd, &char, 1);
- *			if (get_simple_link_packet(c, ...) > 0){
- *				// NEW PACKET ARRIVED! 
- *			}
- *		}
+ *        while(1) {
+ *            read(fd, &char, 1);
+ *            if (get_simple_link_packet(c, ...) > 0) {
+ *                // NEW PACKET ARRIVED! 
+ *            }
+ *        }
  */
 int get_simple_link_packet(uint8_t new_character, simple_link_control_t * c, simple_link_packet_t * p);
 
